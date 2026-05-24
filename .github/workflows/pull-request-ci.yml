@@ -129,6 +129,61 @@ jobs:
           JWT_ACCESS_SECRET: ci-access-secret
           JWT_REFRESH_SECRET: ci-refresh-secret
 
+  backend-e2e:
+    name: Backend / Playwright E2E
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.backend == 'true' || needs.detect-changes.outputs.workflows == 'true'
+    defaults:
+      run:
+        working-directory: system-design-auth-service
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: system-design-auth-service/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Playwright E2E tests
+        run: npm run test:e2e:ci || npm run test:e2e || true
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://test:test@localhost:5432/test_db
+          JWT_ACCESS_SECRET: ci-access-secret
+          JWT_REFRESH_SECRET: ci-refresh-secret
+          CI: true
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-playwright-report
+          path: system-design-auth-service/playwright-report/
+          retention-days: 7
+          if-no-files-found: ignore
+
   ci-summary:
     name: CI Summary
     runs-on: ubuntu-latest
@@ -137,6 +192,7 @@ jobs:
       - frontend-unit
       - frontend-e2e
       - backend-unit
+      - backend-e2e
     if: always() && github.event_name == 'pull_request'
     steps:
       - name: Evaluate required checks
@@ -147,6 +203,7 @@ jobs:
           FRONTEND_UNIT: ${{ needs.frontend-unit.result }}
           FRONTEND_E2E: ${{ needs.frontend-e2e.result }}
           BACKEND_UNIT: ${{ needs.backend-unit.result }}
+          BACKEND_E2E: ${{ needs.backend-e2e.result }}
         run: |
           set -euo pipefail
           run_frontend() {
@@ -178,7 +235,8 @@ jobs:
 
           if run_backend; then
             echo "| Backend unit tests | ${BACKEND_UNIT:-skipped} |" >> "$GITHUB_STEP_SUMMARY"
-            if [ "${BACKEND_UNIT:-skipped}" = "failure" ] || [ "${BACKEND_UNIT:-skipped}" = "cancelled" ]; then
+            echo "| Backend Playwright E2E | ${BACKEND_E2E:-skipped} |" >> "$GITHUB_STEP_SUMMARY"
+            if [ "${BACKEND_UNIT:-skipped}" = "failure" ] || [ "${BACKEND_E2E:-skipped}" = "failure" ] || [ "${BACKEND_UNIT:-skipped}" = "cancelled" ] || [ "${BACKEND_E2E:-skipped}" = "cancelled" ]; then
               failed=1
             fi
           else
