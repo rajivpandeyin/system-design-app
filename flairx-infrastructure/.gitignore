@@ -1,0 +1,41 @@
+node_modules/
+.DS_Store
+*.js
+*.d.ts
+dist/
+build/
+lib/
+cdk.out/
+.env
+.env.local
+.env.*.local
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.cache/
+.pytest_cache/
+*.pyc
+.coverage
+htmlcov/
+.nyc_output/
+coverage/
+.temp/
+*.log
+
+# CDK asset caching
+cdk.context.json
+
+# IDEs
+.vscode/
+.idea/
+*.code-workspace
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db

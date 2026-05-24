@@ -1,0 +1,87 @@
+/**
+ * GuardDutyConstruct - Threat Detection & Response
+ * 
+ * CURRENTLY COMMENTED OUT AND DISABLED
+ * 
+ * This construct enables AWS GuardDuty for threat detection.
+ * Uncomment when:
+ *  - You want real-time threat detection
+ *  - Compliance requires security monitoring
+ *  - Post-launch stack addition (separate from primary infrastructure)
+ * 
+ * Cost: ~$3-5/month (depends on CloudTrail volume)
+ * 
+ * Features:
+ *  - Analyzes CloudTrail management events
+ *  - Analyzes VPC Flow Logs for anomalous network activity
+ *  - Analyzes DNS logs for malicious domain queries
+ *  - Detects compromised EC2 instances
+ *  - Detects unauthorized API calls
+ *  - Provides threat intelligence findings
+ */
+
+/*
+import * as cdk from 'aws-cdk-lib';
+import * as guardduty from 'aws-cdk-lib/aws-guardduty';
+import * as sns from 'aws-cdk-lib/aws-sns';
+import { Construct } from 'constructs';
+
+export interface GuardDutyConstructProps extends cdk.StackProps {
+  alarmTopic: sns.Topic;
+  tags: Record<string, string>;
+}
+
+export class GuardDutyConstruct extends Construct {
+  public readonly detector: guardduty.CfnDetector;
+
+  constructor(scope: Construct, id: string, props: GuardDutyConstructProps) {
+    super(scope, id);
+
+    // Create GuardDuty Detector
+    this.detector = new guardduty.CfnDetector(this, 'FlairXDetector', {
+      enable: true,
+      findingPublishingFrequency: 'FIFTEEN_MINUTES', // or SIX_HOURS
+      // Enable optional data sources
+      dataSourceConfiguration: {
+        s3Logs: {
+          enable: true,
+        },
+        // Kubernetes audit logs (if using EKS)
+        // kubernetes: {
+        //   auditLogs: {
+        //     enable: true,
+        //   },
+        // },
+      },
+    });
+
+    // Create CloudWatch event rule to trigger on GuardDuty findings
+    const findingsRule = new cdk.aws_events.Rule(this, 'GuardDutyFindingsRule', {
+      eventPattern: {
+        source: ['aws.guardduty'],
+        'detail-type': ['GuardDuty Finding'],
+        detail: {
+          severity: [7, 7.0, 7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 7.7, 7.8, 7.9, 8, 8.0, 8.1, 8.2, 8.3, 8.4, 8.5, 8.6, 8.7, 8.8, 8.9], // High severity (7+)
+        },
+      },
+    });
+
+    // Publish GuardDuty finding to SNS for notifications
+    findingsRule.addTarget(
+      new cdk.aws_events_targets.SnsTopic(props.alarmTopic)
+    );
+
+    // Output detector ID for reference
+    new cdk.CfnOutput(this, 'DetectorId', {
+      value: this.detector.ref,
+      exportName: 'FlairX-GuardDutyDetectorId',
+    });
+  }
+}
+*/
+
+// TODO: To enable GuardDuty:
+// 1. Uncomment the entire class above
+// 2. Add GuardDutyConstruct import and instantiation to FlairXStack
+// 3. Run: npm run build && cdk deploy
+// 4. Review findings in AWS Console: GuardDuty → Findings

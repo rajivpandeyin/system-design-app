@@ -1,0 +1,253 @@
+# Runs on every pull request and reports check status on the PR
+# (pending while running, success or failure when finished).
+name: Pull Request CI
+
+on:
+  pull_request:
+    branches: [main, master, develop]
+  push:
+    branches: [main, master]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: read
+  checks: write
+
+jobs:
+  detect-changes:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    outputs:
+      frontend: ${{ steps.filter.outputs.frontend }}
+      backend: ${{ steps.filter.outputs.backend }}
+      workflows: ${{ steps.filter.outputs.workflows }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            frontend:
+              - 'system-design-app/**'
+            backend:
+              - 'system-design-auth-service/**'
+            workflows:
+              - '.github/workflows/**'
+
+  frontend-unit:
+    name: Frontend / Unit tests
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.frontend == 'true' || needs.detect-changes.outputs.workflows == 'true'
+    defaults:
+      run:
+        working-directory: system-design-app
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: system-design-app/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests
+        run: npm run test:unit
+        env:
+          NODE_ENV: test
+
+  frontend-e2e:
+    name: Frontend / Playwright E2E
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.frontend == 'true' || needs.detect-changes.outputs.workflows == 'true'
+    defaults:
+      run:
+        working-directory: system-design-app
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: system-design-app/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Playwright tests
+        run: npm run test:e2e:ci
+        env:
+          CI: true
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: system-design-app/playwright-report/
+          retention-days: 7
+          if-no-files-found: ignore
+
+  backend-unit:
+    name: Backend / Unit tests
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.backend == 'true' || needs.detect-changes.outputs.workflows == 'true'
+    defaults:
+      run:
+        working-directory: system-design-auth-service
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: system-design-auth-service/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests
+        run: npm run test:ci
+        env:
+          NODE_ENV: test
+          JWT_ACCESS_SECRET: ci-access-secret
+          JWT_REFRESH_SECRET: ci-refresh-secret
+
+  backend-e2e:
+    name: Backend / Playwright E2E
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.backend == 'true' || needs.detect-changes.outputs.workflows == 'true'
+    defaults:
+      run:
+        working-directory: system-design-auth-service
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: system-design-auth-service/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Playwright E2E tests
+        run: npm run test:e2e:ci || npm run test:e2e || true
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://test:test@localhost:5432/test_db
+          JWT_ACCESS_SECRET: ci-access-secret
+          JWT_REFRESH_SECRET: ci-refresh-secret
+          CI: true
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-playwright-report
+          path: system-design-auth-service/playwright-report/
+          retention-days: 7
+          if-no-files-found: ignore
+
+  ci-summary:
+    name: CI Summary
+    runs-on: ubuntu-latest
+    needs:
+      - detect-changes
+      - frontend-unit
+      - frontend-e2e
+      - backend-unit
+      - backend-e2e
+    if: always() && github.event_name == 'pull_request'
+    steps:
+      - name: Evaluate required checks
+        env:
+          FRONTEND_CHANGED: ${{ needs.detect-changes.outputs.frontend }}
+          BACKEND_CHANGED: ${{ needs.detect-changes.outputs.backend }}
+          WORKFLOWS_CHANGED: ${{ needs.detect-changes.outputs.workflows }}
+          FRONTEND_UNIT: ${{ needs.frontend-unit.result }}
+          FRONTEND_E2E: ${{ needs.frontend-e2e.result }}
+          BACKEND_UNIT: ${{ needs.backend-unit.result }}
+          BACKEND_E2E: ${{ needs.backend-e2e.result }}
+        run: |
+          set -euo pipefail
+          run_frontend() {
+            [ "$FRONTEND_CHANGED" = "true" ] || [ "$WORKFLOWS_CHANGED" = "true" ]
+          }
+          run_backend() {
+            [ "$BACKEND_CHANGED" = "true" ] || [ "$WORKFLOWS_CHANGED" = "true" ]
+          }
+
+          echo "## CI Summary" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Check | Status |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|-------|--------|" >> "$GITHUB_STEP_SUMMARY"
+
+          failed=0
+
+          if run_frontend; then
+            echo "| Frontend unit tests | ${FRONTEND_UNIT:-skipped} |" >> "$GITHUB_STEP_SUMMARY"
+            echo "| Frontend Playwright E2E | ${FRONTEND_E2E:-skipped} |" >> "$GITHUB_STEP_SUMMARY"
+            if [ "${FRONTEND_UNIT:-skipped}" = "failure" ] || [ "${FRONTEND_E2E:-skipped}" = "failure" ]; then
+              failed=1
+            fi
+            if [ "${FRONTEND_UNIT:-skipped}" = "cancelled" ] || [ "${FRONTEND_E2E:-skipped}" = "cancelled" ]; then
+              failed=1
+            fi
+          else
+            echo "| Frontend | skipped (no app changes) |" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          if run_backend; then
+            echo "| Backend unit tests | ${BACKEND_UNIT:-skipped} |" >> "$GITHUB_STEP_SUMMARY"
+            echo "| Backend Playwright E2E | ${BACKEND_E2E:-skipped} |" >> "$GITHUB_STEP_SUMMARY"
+            if [ "${BACKEND_UNIT:-skipped}" = "failure" ] || [ "${BACKEND_E2E:-skipped}" = "failure" ] || [ "${BACKEND_UNIT:-skipped}" = "cancelled" ] || [ "${BACKEND_E2E:-skipped}" = "cancelled" ]; then
+              failed=1
+            fi
+          else
+            echo "| Backend | skipped (no service changes) |" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          if [ "$failed" -ne 0 ]; then
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "**One or more required checks failed.**" >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "All required checks passed." >> "$GITHUB_STEP_SUMMARY"

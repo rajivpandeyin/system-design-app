@@ -1,0 +1,26 @@
+{
+  "name": "postgresql-sharding-infra",
+  "version": "1.0.0",
+  "description": "PostgreSQL sharding infrastructure with hash-based sharding on AWS EC2 using CDK",
+  "main": "src/index.js",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "deploy": "cdk deploy",
+    "synth": "cdk synth",
+    "diff": "cdk diff",
+    "destroy": "cdk destroy",
+    "test": "jest"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "^2.120.0",
+    "constructs": "^10.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
+    "jest": "^29.0.0",
+    "@types/jest": "^29.0.0",
+    "ts-jest": "^29.0.0"
+  }
+}

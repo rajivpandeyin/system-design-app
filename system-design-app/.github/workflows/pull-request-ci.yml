@@ -1,0 +1,136 @@
+# Runs on PRs to develop (feature branches) and main (develop → main).
+# Each job appears as a status check on the pull request.
+name: Pull Request CI
+
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [develop, main]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: read
+  checks: write
+
+jobs:
+  unit-tests:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests
+        run: npm run test:unit
+        env:
+          NODE_ENV: test
+
+  playwright-e2e:
+    name: Playwright E2E
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Playwright tests
+        run: npm run test:e2e:ci
+        env:
+          CI: true
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+          if-no-files-found: ignore
+
+  build:
+    name: Production build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+  ci-summary:
+    name: CI Summary
+    runs-on: ubuntu-latest
+    needs: [unit-tests, playwright-e2e, build]
+    if: always() && github.event_name == 'pull_request'
+    steps:
+      - name: Evaluate required checks
+        env:
+          UNIT: ${{ needs.unit-tests.result }}
+          E2E: ${{ needs.playwright-e2e.result }}
+          BUILD: ${{ needs.build.result }}
+          BASE: ${{ github.base_ref }}
+          HEAD: ${{ github.head_ref }}
+        run: |
+          set -euo pipefail
+
+          echo "## CI Summary" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "**PR:** \`${HEAD}\` → \`${BASE}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Check | Status |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|-------|--------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Unit tests | ${UNIT} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Playwright E2E | ${E2E} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Production build | ${BUILD} |" >> "$GITHUB_STEP_SUMMARY"
+
+          failed=0
+          for result in "$UNIT" "$E2E" "$BUILD"; do
+            if [ "$result" = "failure" ] || [ "$result" = "cancelled" ]; then
+              failed=1
+            fi
+          done
+
+          if [ "$BASE" = "main" ] && [[ ! "$HEAD" =~ ^develop$ ]]; then
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "⚠️ **Warning:** PRs to \`main\` should normally come from \`develop\` only." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          if [ "$failed" -ne 0 ]; then
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "**One or more checks failed.**" >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "All checks passed." >> "$GITHUB_STEP_SUMMARY"

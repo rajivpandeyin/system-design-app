@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2026-04-28T00:00:00.000Z" agent="Mozilla/5.0" version="24.2.0" type="device">
+  <diagram id="flairx-dfd" name="FlairX Data Flow Diagram">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" background="none" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        
+        <!-- Title -->
+        <mxCell id="title" value="FlairX Infrastructure - Data Flow Diagram" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=20;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="300" y="20" width="600" height="40" as="geometry"/>
+        </mxCell>
+        
+        <!-- EXTERNAL ENTITIES (Left side) -->
+        <!-- Users/Internet -->
+        <mxCell id="entity_users" value="Users / Internet" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#0066cc;fillColor=#e6f2ff;fontSize=12;fontStyle=1;strokeWidth=2" vertex="1" parent="1">
+          <mxGeometry x="50" y="150" width="120" height="60" as="geometry"/>
+        </mxCell>
+        
+        <!-- DNS -->
+        <mxCell id="entity_dns" value="Route53 DNS" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#0066cc;fillColor=#e6f2ff;fontSize=11;strokeWidth=2" vertex="1" parent="1">
+          <mxGeometry x="50" y="270" width="120" height="50" as="geometry"/>
+        </mxCell>
+        
+        <!-- PROCESSES (Center-top) -->
+        <!-- Application Load Balancer -->
+        <mxCell id="process_alb" value="ALB&#10;HTTPS/HTTP&#10;Port 443/80" style="rounded=0;whiteSpace=wrap;html=1;strokeColor=#ff9900;fillColor=#ffe6cc;fontSize=11;fontStyle=1;strokeWidth=2" vertex="1" parent="1">
+          <mxGeometry x="250" y="140" width="120" height="80" as="geometry"/>
+        </mxCell>
+        
+        <!-- EC2 Auto Scaling Group -->
+        <mxCell id="process_asg" value="EC2 ASG&#10;1-4 instances&#10;Node.js v20&#10;Port 3004" style="rounded=0;whiteSpace=wrap;html=1;strokeColor=#ff9900;fillColor=#ffe6cc;fontSize=11;fontStyle=1;strokeWidth=2" vertex="1" parent="1">
+          <mxGeometry x="480" y="140" width="130" height="80" as="geometry"/>
+        </mxCell>
+        
+        <!-- RDS Database -->
+        <mxCell id="process_rds" value="RDS PostgreSQL&#10;db.t4g.medium&#10;Port 5432" style="rounded=0;whiteSpace=wrap;html=1;strokeColor=#ff9900;fillColor=#ffe6cc;fontSize=11;fontStyle=1;strokeWidth=2" vertex="1" parent="1">
+          <mxGeometry x="480" y="320" width="130" height="80" as="geometry"/>
+        </mxCell>
+        
+        <!-- DATA STORES (Right side) -->
+        <!-- Secrets Manager -->
+        <mxCell id="datastore_secrets" value="Secrets Manager&#10;DB Credentials&#10;API Keys" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#009900;fillColor=#ccffcc;fontSize=11;fontStyle=1;strokeWidth=2" vertex="1" parent="1">
+          <mxGeometry x="750" y="140" width="130" height="80" as="geometry"/>
+        </mxCell>
+        
+        <!-- CloudWatch Logs -->
+        <mxCell id="datastore_logs" value="CloudWatch Logs&#10;/flairx/app&#10;/flairx/errors" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#009900;fillColor=#ccffcc;fontSize=11;fontStyle=1;strokeWidth=2" vertex="1" parent="1">
+          <mxGeometry x="750" y="260" width="130" height="80" as="geometry"/>
+        </mxCell>
+        
+        <!-- S3 Buckets -->
+        <mxCell id="datastore_s3" value="S3 Buckets&#10;ALB Logs&#10;Flow Logs" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#009900;fillColor=#ccffcc;fontSize=11;fontStyle=1;strokeWidth=2" vertex="1" parent="1">
+          <mxGeometry x="750" y="380" width="130" height="80" as="geometry"/>
+        </mxCell>
+        
+        <!-- KMS Key -->
+        <mxCell id="datastore_kms" value="KMS CMK&#10;Encryption" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#009900;fillColor=#ccffcc;fontSize=11;fontStyle=1;strokeWidth=2" vertex="1" parent="1">
+          <mxGeometry x="750" y="500" width="130" height="60" as="geometry"/>
+        </mxCell>
+        
+        <!-- AWS Services (Bottom right, external) -->
+        <mxCell id="service_ssm" value="SSM Session Manager&#10;Shell Access" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#6600cc;fillColor=#e6ccff;fontSize=10;strokeWidth=1.5" vertex="1" parent="1">
+          <mxGeometry x="1000" y="140" width="130" height="60" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="service_sns" value="SNS Topic&#10;Alarms" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#6600cc;fillColor=#e6ccff;fontSize=10;strokeWidth=1.5" vertex="1" parent="1">
+          <mxGeometry x="1000" y="220" width="130" height="60" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="service_cloudtrail" value="CloudTrail&#10;Audit Logs" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#6600cc;fillColor=#e6ccff;fontSize=10;strokeWidth=1.5" vertex="1" parent="1">
+          <mxGeometry x="1000" y="300" width="130" height="60" as="geometry"/>
+        </mxCell>
+        
+        <!-- DATA FLOWS -->
+        
+        <!-- Users → Route53 -->
+        <mxCell id="flow_users_dns" value="HTTPS Request" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000;strokeWidth=2;entryX=0;entryY=0.5" edge="1" source="entity_users" target="entity_dns" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        
+        <!-- Route53 → ALB -->
+        <mxCell id="flow_dns_alb" value="CNAME Resolution&#10;(api.flairx.ai)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0066cc;strokeWidth=2;fontSize=9;entryX=0.1;entryY=0.5" edge="1" source="entity_dns" target="process_alb" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="170" y="195" as="sourcePoint"/>
+            <mxPoint x="250" y="195" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- Users → ALB (direct) -->
+        <mxCell id="flow_users_alb" value="HTTPS/HTTP&#10;(Port 443/80)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0066cc;strokeWidth=2;fontSize=9" edge="1" source="entity_users" target="process_alb" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="170" y="180" as="sourcePoint"/>
+            <mxPoint x="250" y="180" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- ALB → EC2 ASG -->
+        <mxCell id="flow_alb_asg" value="Forward Request&#10;(Port 3004)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#ff9900;strokeWidth=2;fontSize=9;dashed=0" edge="1" source="process_alb" target="process_asg" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="370" y="180" as="sourcePoint"/>
+            <mxPoint x="480" y="180" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- ALB → S3 (logs) -->
+        <mxCell id="flow_alb_s3logs" value="Access Logs" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#009900;strokeWidth=2;fontSize=9;dashed=1" edge="1" source="process_alb" target="datastore_s3" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="370" y="220" as="sourcePoint"/>
+            <mxPoint x="750" y="320" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- EC2 ASG → RDS -->
+        <mxCell id="flow_asg_rds" value="SQL Queries&#10;(Port 5432)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#ff6600;strokeWidth=2;fontSize=9" edge="1" source="process_asg" target="process_rds" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="545" y="220" as="sourcePoint"/>
+            <mxPoint x="545" y="320" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- EC2 ASG → Secrets Manager -->
+        <mxCell id="flow_asg_secrets" value="Read Credentials&#10;(GetSecretValue)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#009900;strokeWidth=2;fontSize=9" edge="1" source="process_asg" target="datastore_secrets" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="610" y="160" as="sourcePoint"/>
+            <mxPoint x="750" y="160" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- EC2 ASG → CloudWatch Logs -->
+        <mxCell id="flow_asg_logs" value="Application Logs&#10;(JSON)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#009900;strokeWidth=2;fontSize=9" edge="1" source="process_asg" target="datastore_logs" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="610" y="200" as="sourcePoint"/>
+            <mxPoint x="750" y="260" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- EC2 ASG → S3 (via VPC endpoint) -->
+        <mxCell id="flow_asg_s3" value="Read Objects&#10;(S3 API)&#10;(VPC Endpoint)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#00cc00;strokeWidth=2;fontSize=9;dashed=1" edge="1" source="process_asg" target="datastore_s3" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="610" y="220" as="sourcePoint"/>
+            <mxPoint x="750" y="380" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- EC2 ASG → SSM Session Manager -->
+        <mxCell id="flow_asg_ssm" value="Shell Access&#10;(Systems Mgr)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#6600cc;strokeWidth=1.5;fontSize=9;dashed=1" edge="1" source="process_asg" target="service_ssm" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="610" y="175" as="sourcePoint"/>
+            <mxPoint x="1000" y="165" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- RDS → CloudWatch Logs -->
+        <mxCell id="flow_rds_logs" value="Error Logs" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#009900;strokeWidth=2;fontSize=9;dashed=1" edge="1" source="process_rds" target="datastore_logs" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="610" y="360" as="sourcePoint"/>
+            <mxPoint x="750" y="300" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- RDS → KMS (encryption) -->
+        <mxCell id="flow_rds_kms" value="Encryption/Decrypt" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#009900;strokeWidth=1.5;fontSize=9;dashed=1" edge="1" source="process_rds" target="datastore_kms" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="610" y="380" as="sourcePoint"/>
+            <mxPoint x="750" y="520" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- Secrets Manager → KMS (encryption) -->
+        <mxCell id="flow_secrets_kms" value="Decrypt Secrets" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#009900;strokeWidth=1.5;fontSize=9;dashed=1" edge="1" source="datastore_secrets" target="datastore_kms" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="815" y="220" as="sourcePoint"/>
+            <mxPoint x="815" y="500" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- CloudWatch → SNS (alarms) -->
+        <mxCell id="flow_logs_sns" value="Trigger Alarms" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#6600cc;strokeWidth=1.5;fontSize=9;dashed=1" edge="1" source="datastore_logs" target="service_sns" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="880" y="300" as="sourcePoint"/>
+            <mxPoint x="1000" y="250" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- SNS → Users (notifications) -->
+        <mxCell id="flow_sns_users" value="Email/SMS Alerts" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#6600cc;strokeWidth=1.5;fontSize=9;dashed=1" edge="1" source="service_sns" target="entity_users" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1000" y="240" as="sourcePoint"/>
+            <mxPoint x="170" y="180" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- CloudTrail (monitoring all) -->
+        <mxCell id="flow_cloudtrail" value="Audit Trail" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#6600cc;strokeWidth=1.5;fontSize=8;dashed=1" edge="1" source="process_asg" target="service_cloudtrail" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="610" y="175" as="sourcePoint"/>
+            <mxPoint x="1000" y="330" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- ALB Response → Users -->
+        <mxCell id="flow_alb_users" value="HTTP Response&#10;(HTML/JSON)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0066cc;strokeWidth=2;fontSize=9" edge="1" source="process_alb" target="entity_users" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="250" y="200" as="sourcePoint"/>
+            <mxPoint x="170" y="220" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- Legend -->
+        <mxCell id="legend_title" value="Legend" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=12;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="50" y="600" width="100" height="30" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="legend_entity" value="🔵 External Entity" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#0066cc;fillColor=#e6f2ff;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="50" y="640" width="140" height="30" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="legend_process" value="🟨 Process/System" style="rounded=0;whiteSpace=wrap;html=1;strokeColor=#ff9900;fillColor=#ffe6cc;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="210" y="640" width="140" height="30" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="legend_datastore" value="🟢 Data Store/Service" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#009900;fillColor=#ccffcc;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="370" y="640" width="140" height="30" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="legend_flow_solid" value="━  Solid: Critical Flow" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="530" y="640" width="140" height="30" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="legend_flow_dashed" value="╌  Dashed: Secondary Flow" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="690" y="640" width="160" height="30" as="geometry"/>
+        </mxCell>
+        
+        <!-- Notes -->
+        <mxCell id="notes" value="Notes:&#10;• EC2 instances use IMDSv2 for secure credential fetching&#10;• All traffic encrypted (in-transit &amp; at-rest with KMS)&#10;• VPC endpoints provide free egress for S3&#10;• RDS in isolated subnet (no internet route)&#10;• Secrets cached in application (not API call per request)" style="text;html=1;strokeColor=#cccccc;fillColor=#f9f9f9;align=left;verticalAlign=top;fontSize=9;rounded=1;strokeWidth=1" vertex="1" parent="1">
+          <mxGeometry x="50" y="690" width="900" height="100" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+
+# Build
+dist/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# Test artifacts
+coverage/
+test-results/
+playwright-report/
+playwright/.cache/
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+
+# Vite
+*.local
