@@ -1,0 +1,36 @@
+{
+  "app": "npx ts-node src/app.ts",
+  "watch": {
+    "include": ["**"],
+    "exclude": ["README.md", "cdk.out", "node_modules"]
+  },
+  "context": {
+    "environment": "production",
+    "project": "flairx",
+    "awsRegion": "us-east-1",
+    "vpcCidr": "10.0.0.0/16",
+    "azCount": 2,
+    "natGatewayCount": 1,
+    "ec2InstanceType": "t4g.medium",
+    "ec2MinCapacity": 1,
+    "ec2DesiredCapacity": 1,
+    "ec2MaxCapacity": 4,
+    "rdsInstanceClass": "db.t4g.medium",
+    "certArn": "arn:aws:acm:us-east-1:ACCOUNT_ID:certificate/CERT_ID",
+    "owner": "platform-team",
+    "costCenter": "engineering",
+    "logRetentionDays": {
+      "app": 14,
+      "error": 30,
+      "audit": 90
+    },
+    "alarmThresholds": {
+      "cpuScale": 60,
+      "cpuCritical": 80,
+      "rdssCpu": 75,
+      "alb5xxRate": 1,
+      "albP99ResponseTime": 2000,
+      "rdsFreeStorage": 10
+    }
+  }
+}
