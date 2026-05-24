@@ -1,0 +1,13 @@
+{
+  "app": "npx ts-node src/index.ts",
+  "context": {
+    "environment": "production",
+    "region": "us-east-1",
+    "vpcCidr": "10.0.0.0/16",
+    "shardCount": 2,
+    "instanceType": "t3.medium",
+    "storageSize": 10,
+    "storageType": "gp3",
+    "postgresVersion": "14.10"
+  }
+}

@@ -1,0 +1,35 @@
+# CDK
+dist/
+*.d.ts
+cdk.out/
+.cdk.staging/
+
+# Node
+node_modules/
+npm-debug.log
+package-lock.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# ENV
+.env
+.env.local
+.env.*.local
+
+# AWS
+*.pem
+vockey.pem
+
+# Logs
+*.log
+logs/
+
+# Build artifacts
+build/
+out/
